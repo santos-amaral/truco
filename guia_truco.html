@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia do Truco Cego</title>
+
+<!-- Fontes: Felipa para títulos e cantos ("Truco!"), Kanit para o texto.
+     Só os pesos usados são carregados, para a página abrir mais rápido. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Felipa&family=Kanit:wght@300;400;500;600&display=swap">
+
+<style>
+/* =========================================================
+   1. TOKENS
+   Layout: o que é para LER fica em papel creme, numa coluna
+   estreita; o que é para PRATICAR fica sobre feltro verde.
+   ========================================================= */
+:root{
+    /* papel (leitura) */
+    --papel:#f6f1e3;
+    --papel-2:#ebe4cf;
+    --folha:#fffdf6;
+    --tinta:#22302a;
+    --tinta-2:#56645c;
+    --linha:#d8cfb6;
+
+    /* feltro (prática) */
+    --feltro:#1d5c40;
+    --feltro-fundo:#123c2a;
+    --feltro-tinta:#f4efdd;
+    --feltro-tinta-2:#c3d8ca;
+    --feltro-linha:rgba(255,255,255,.18);
+    --feltro-certo:#c4efcf;
+    --feltro-erro:#ffd0c9;
+
+    /* acentos */
+    --ouro:#d9ad34;
+    --ouro-sobre:#2b2206;
+    --ouro-tinta:#7d5a08;
+    --rubro-tinta:#a02a2a;
+    --certo:#1f6b48;
+    --certo-fundo:#e2f1e6;
+    --erro-fundo:#fbe6e2;
+
+    /* cartas: são objetos de papel, iguais nos dois temas */
+    --carta:#fbf7ea;
+    --carta-tinta:#2b2a26;
+    --carta-sombra:rgba(8,26,18,.3);
+    --espadas:#2c5a8c;
+    --paus:#2e7a3f;
+    --ouros:#b98209;
+    --copas:#b3382f;
+
+    /* equipes nos diagramas de mesa */
+    --equipe-a:#e2bb4e;
+    --equipe-b:#cf5046;
+    --equipe-b-tinta:#ffffff;
+
+    --f-titulo:"Felipa","Brush Script MT",cursive;
+    --f-texto:"Kanit","Segoe UI",system-ui,sans-serif;
+    --raio:10px;
+    --coluna:66ch;
+}
+
+@media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+        --papel:#101a15; --papel-2:#1a2a22; --folha:#16241d;
+        --tinta:#ebe7d8; --tinta-2:#a6b4aa; --linha:#2d4236;
+        --feltro:#1a5139; --feltro-fundo:#0c2a1d;
+        --ouro-tinta:#e6c35c; --rubro-tinta:#f0938a;
+        --certo:#74cf9c; --certo-fundo:#173a2a; --erro-fundo:#40201d;
+        --carta:#f1ebd8;
+        color-scheme:dark;
+    }
+}
+:root[data-theme="dark"]{
+    --papel:#101a15; --papel-2:#1a2a22; --folha:#16241d;
+    --tinta:#ebe7d8; --tinta-2:#a6b4aa; --linha:#2d4236;
+    --feltro:#1a5139; --feltro-fundo:#0c2a1d;
+    --ouro-tinta:#e6c35c; --rubro-tinta:#f0938a;
+    --certo:#74cf9c; --certo-fundo:#173a2a; --erro-fundo:#40201d;
+    --carta:#f1ebd8;
+    color-scheme:dark;
+}
+
+/* =========================================================
+   2. BASE
+   ========================================================= */
+*,*::before,*::after{ box-sizing:border-box; }
+[hidden]{ display:none !important; }
+
+html{ scroll-behavior:smooth; }
+
+body{
+    margin:0;
+    background:var(--papel);
+    color:var(--tinta);
+    font-family:var(--f-texto);
+    font-size:1.0625rem;
+    font-weight:300;
+    line-height:1.65;
+    -webkit-text-size-adjust:100%;
+}
+
+h1,h2,h3{ margin:0; text-wrap:balance; }
+p{ margin:0; }
+strong,b{ font-weight:500; }
+a{ color:inherit; }
+button{ font:inherit; color:inherit; }
+:focus-visible{ outline:2px solid var(--ouro); outline-offset:3px; }
+::selection{ background:var(--ouro); color:var(--ouro-sobre); }
+
+.pagina{
+    max-width:1040px;
+    margin-inline:auto;
+    padding-inline:clamp(16px,4vw,32px);
+}
+
+/* Cantos do jogo ("Truco!", "Envido!"): a letra cursiva imita a fala cantada */
+.canto{
+    font-family:var(--f-titulo);
+    font-size:1.3em;
+    line-height:1;
+    color:var(--rubro-tinta);
+    white-space:nowrap;
+}
+
+/* =========================================================
+   3. CARTAS (desenhadas em CSS + SVG, sem imagens)
+   Os tamanhos internos usam cqw, então a carta escala inteira
+   só mudando a largura (--w).
+   ========================================================= */
+.carta{
+    --w:4.5rem;
+    --c:var(--carta-tinta);
+    --pinta:var(--c);
+    container-type:inline-size;
+    position:relative;
+    display:inline-block;
+    flex:none;
+    width:var(--w);
+    aspect-ratio:5/7;
+    border-radius:8% / 6%;
+    background:var(--carta);
+    color:var(--carta-tinta);
+    box-shadow:0 2px 7px var(--carta-sombra);
+    font-family:var(--f-texto);
+    vertical-align:middle;
+}
+/* A "pinta": no baralho espanhol, as falhas na moldura identificam o naipe */
+.carta[data-naipe="ouros"]  { --c:var(--ouros); }
+.carta[data-naipe="copas"]  { --c:var(--copas);
+    --pinta:linear-gradient(90deg,var(--c) 0 42%,transparent 42% 58%,var(--c) 58%); }
+.carta[data-naipe="espadas"]{ --c:var(--espadas);
+    --pinta:linear-gradient(90deg,var(--c) 0 27%,transparent 27% 39%,var(--c) 39% 61%,transparent 61% 73%,var(--c) 73%); }
+.carta[data-naipe="paus"]   { --c:var(--paus);
+    --pinta:linear-gradient(90deg,var(--c) 0 19%,transparent 19% 29%,var(--c) 29% 45%,transparent 45% 55%,var(--c) 55% 71%,transparent 71% 81%,var(--c) 81%); }
+
+.carta__in{
+    position:absolute;
+    inset:6cqw;
+    display:grid;
+    place-items:center;
+    border-inline:1.5px solid var(--c);
+}
+.carta__in::before,
+.carta__in::after{
+    content:"";
+    position:absolute;
+    left:0; right:0;
+    height:1.5px;
+    background:var(--pinta);
+}
+.carta__in::before{ top:0; }
+.carta__in::after{ bottom:0; }
+
+.carta__n{
+    position:absolute;
+    top:3cqw; left:7cqw;
+    font-size:27cqw;
+    font-weight:600;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+}
+.carta__naipe{
+    width:44cqw; height:44cqw;
+    fill:var(--c);
+}
+.carta__fig{
+    position:absolute;
+    bottom:5cqw; left:0; right:0;
+    text-align:center;
+    font-size:12.5cqw;
+    font-weight:500;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    line-height:1;
+}
+.carta--manilha{ box-shadow:0 0 0 2px var(--ouro), 0 2px 9px var(--carta-sombra); }
+
+/* versão miniatura (grade do baralho): só número e naipe */
+.carta--mini{ width:100%; box-shadow:0 1px 3px var(--carta-sombra); }
+.carta--mini .carta__in{
+    inset:0; border:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4cqw;
+}
+.carta--mini .carta__in::before,
+.carta--mini .carta__in::after{ content:none; }
+.carta--mini .carta__n{ position:static; font-size:44cqw; }
+.carta--mini .carta__naipe{ width:34cqw; height:34cqw; }
+.carta--mini .carta__fig{ display:none; }
+
+/* =========================================================
+   4. BARRA DE NAVEGAÇÃO (fixa no topo, mostra o progresso)
+   ========================================================= */
+.trilha{
+    position:sticky;
+    top:env(safe-area-inset-top,0px);
+    z-index:10;
+    background:var(--papel);
+    border-bottom:1px solid var(--linha);
+}
+.trilha__in{
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    min-height:3.25rem;
+}
+.trilha__marca{
+    font-family:var(--f-titulo);
+    font-size:1.5rem;
+    line-height:1;
+    text-decoration:none;
+    white-space:nowrap;
+}
+.trilha__links{
+    flex:1;
+    min-width:0;
+    display:flex;
+    gap:.25rem;
+    margin:0; padding:.4rem 0;
+    list-style:none;
+    overflow-x:auto;
+    scrollbar-width:none;
+}
+.trilha__links::-webkit-scrollbar{ display:none; }
+.trilha__links a{
+    display:block;
+    padding:.3rem .7rem;
+    border-radius:999px;
+    font-size:.9rem;
+    font-weight:400;
+    color:var(--tinta-2);
+    text-decoration:none;
+    white-space:nowrap;
+}
+.trilha__links a:hover{ background:var(--papel-2); color:var(--tinta); }
+.trilha__links a.ativa{ background:var(--feltro); color:var(--feltro-tinta); }
+.trilha__links a.feita::after{ content:" ✓"; color:var(--certo); font-weight:600; }
+.trilha__links a.ativa.feita::after{ color:var(--ouro); }
+.trilha__conta{
+    font-size:.85rem;
+    font-weight:500;
+    color:var(--tinta-2);
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+}
+.trilha__tema{
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    padding:.3rem .8rem;
+    border:1px solid var(--linha);
+    border-radius:999px;
+    background:var(--folha);
+    font-size:.85rem;
+    font-weight:400;
+    white-space:nowrap;
+    cursor:pointer;
+}
+.trilha__tema:hover{ border-color:var(--ouro); }
+.trilha__tema svg{ width:1rem; height:1rem; fill:currentColor; flex:none; }
+.trilha__barra{ height:3px; background:var(--papel-2); }
+.trilha__barra span{
+    display:block; height:100%; width:0;
+    background:var(--ouro);
+    transition:width .4s ease;
+}
+
+/* =========================================================
+   5. ABERTURA
+   ========================================================= */
+.abertura{
+    background:radial-gradient(120% 150% at 15% 0%,var(--feltro) 0%,var(--feltro-fundo) 72%);
+    color:var(--feltro-tinta);
+}
+.abertura__in{
+    display:grid;
+    grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);
+    align-items:center;
+    gap:2rem;
+    padding-block:clamp(2.25rem,6vw,4rem);
+}
+.abertura__naipes{ display:flex; gap:.7rem; margin-bottom:1rem; }
+.abertura__naipes svg{ width:1.4rem; height:1.4rem; fill:var(--ouro); }
+.sobretitulo{
+    font-size:.8rem;
+    font-weight:500;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--feltro-tinta-2);
+}
+.abertura h1{
+    font-family:var(--f-titulo);
+    font-weight:400;
+    font-size:clamp(3.4rem,11vw,6rem);
+    line-height:.95;
+    margin-block:.35rem 1rem;
+}
+.abertura__texto{ max-width:34rem; color:var(--feltro-tinta-2); }
+.abertura__texto strong{ color:var(--feltro-tinta); }
+
+.leque{ display:flex; justify-content:center; padding-top:.5rem; }
+.leque .carta{ --w:clamp(4.2rem,11vw,6.2rem); margin-inline:-.55rem; transform-origin:50% 120%; }
+.leque .carta:nth-child(1){ transform:rotate(-15deg); }
+.leque .carta:nth-child(2){ transform:rotate(-5deg); }
+.leque .carta:nth-child(3){ transform:rotate(5deg); }
+.leque .carta:nth-child(4){ transform:rotate(15deg); }
+.leque__legenda{
+    margin-top:1.4rem;
+    text-align:center;
+    font-size:.9rem;
+    color:var(--feltro-tinta-2);
+}
+
+/* =========================================================
+   6. LIÇÕES
+   ========================================================= */
+.licao{
+    display:flex;
+    flex-direction:column;
+    gap:1.1rem;
+    padding-block:clamp(2.5rem,6vw,4rem);
+    border-bottom:1px solid var(--linha);
+    scroll-margin-top:4rem;
+}
+.licao > p,
+.licao > ol,
+.licao > ul,
+.licao > h3,
+.licao > .nota{ max-width:var(--coluna); }
+
+.licao__cab{ display:flex; flex-direction:column; gap:.2rem; margin-bottom:.4rem; }
+.licao__num{
+    font-size:.8rem;
+    font-weight:500;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ouro-tinta);
+}
+.licao h2{
+    font-family:var(--f-titulo);
+    font-weight:400;
+    font-size:clamp(2.2rem,6vw,3.1rem);
+    line-height:1.05;
+}
+.licao__meta{ color:var(--tinta-2); max-width:var(--coluna); }
+.licao h3{
+    font-size:1.2rem;
+    font-weight:600;
+    line-height:1.3;
+    margin-top:.9rem;
+}
+.licao ol,.licao ul{ margin:0; padding-left:1.4rem; display:flex; flex-direction:column; gap:.45rem; }
+.licao li::marker{ color:var(--ouro-tinta); font-weight:500; }
+
+/* notas: aviso (vermelho) e dica (dourado) */
+.nota{
+    display:flex; flex-direction:column; gap:.4rem;
+    padding:1rem 1.15rem;
+    border-radius:var(--raio);
+    background:var(--papel-2);
+}
+.nota__rotulo{
+    font-size:.78rem;
+    font-weight:600;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--rubro-tinta);
+}
+.nota--dica .nota__rotulo{ color:var(--ouro-tinta); }
+
+/* vocabulário em pares termo/definição */
+.termos{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));
+    gap:1rem 2.5rem;
+    margin:0;
+}
+.termos div{ min-width:0; border-top:1px solid var(--linha); padding-top:.6rem; }
+.termos dt{ font-weight:600; }
+.termos dd{ margin:0; color:var(--tinta-2); }
+
+/* tabelas: rolam dentro da própria caixa em telas estreitas */
+.tabela{ overflow-x:auto; }
+.tabela table{
+    width:100%;
+    min-width:30rem;
+    border-collapse:collapse;
+    font-variant-numeric:tabular-nums;
+}
+.tabela th,.tabela td{
+    padding:.65rem .9rem .65rem 0;
+    text-align:left;
+    vertical-align:top;
+    border-bottom:1px solid var(--linha);
+}
+.tabela thead th{
+    font-size:.78rem;
+    font-weight:600;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--tinta-2);
+}
+.tabela tbody th{ font-weight:500; }
+
+.licao__fim{ margin-top:.8rem; }
+.btn-concluir{
+    padding:.6rem 1.2rem;
+    border:1.5px solid var(--certo);
+    border-radius:999px;
+    background:transparent;
+    color:var(--certo);
+    font-weight:500;
+    cursor:pointer;
+}
+.btn-concluir:hover{ background:var(--certo-fundo); }
+.btn-concluir[aria-pressed="true"]{ background:var(--certo); color:var(--papel); }
+
+/* =========================================================
+   7. MESA DE TREINO (painel de feltro)
+   ========================================================= */
+.mesa{
+    display:flex;
+    flex-direction:column;
+    gap:.9rem;
+    padding:clamp(1.1rem,3.5vw,1.9rem);
+    border-radius:16px;
+    background:radial-gradient(130% 160% at 10% 0%,var(--feltro) 0%,var(--feltro-fundo) 85%);
+    color:var(--feltro-tinta);
+    box-shadow:inset 0 0 0 1px var(--feltro-linha);
+}
+.mesa__rotulo{
+    font-size:.78rem;
+    font-weight:500;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ouro);
+}
+.mesa h3{ margin:0; font-size:1.3rem; }
+.mesa > p{ max-width:var(--coluna); color:var(--feltro-tinta-2); }
+.mesa .canto{ color:var(--ouro); }
+.mesa__rodape{
+    display:flex; flex-wrap:wrap; align-items:center; gap:.75rem 1.25rem;
+    font-size:.92rem;
+    color:var(--feltro-tinta-2);
+    font-variant-numeric:tabular-nums;
+}
+
+.btn{
+    padding:.55rem 1.15rem;
+    border:1.5px solid var(--ouro);
+    border-radius:999px;
+    background:var(--ouro);
+    color:var(--ouro-sobre);
+    font-weight:500;
+    cursor:pointer;
+}
+.btn:hover{ filter:brightness(1.07); }
+.btn--fantasma{
+    background:transparent;
+    border-color:var(--feltro-linha);
+    color:var(--feltro-tinta);
+}
+.btn--fantasma:hover{ border-color:var(--ouro); filter:none; }
+.btn:disabled{ opacity:.45; cursor:default; }
+
+.retorno{ min-height:1.65em; font-weight:400; color:var(--feltro-tinta); }
+.retorno[data-ok="1"]{ color:var(--feltro-certo); }
+.retorno[data-ok="0"]{ color:var(--feltro-erro); }
+
+/* --- Lição 1: grade do baralho --- */
+.baralho{ display:flex; flex-direction:column; gap:.7rem; }
+.baralho__naipe{
+    display:flex; align-items:center; gap:.4rem;
+    font-size:.82rem; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--feltro-tinta-2);
+    margin-bottom:.3rem;
+}
+.baralho__naipe svg{ width:1rem; height:1rem; fill:var(--ouro); }
+.baralho__linha{
+    display:grid;
+    grid-template-columns:repeat(12,minmax(0,1fr));
+    gap:clamp(3px,.9vw,8px);
+    max-width:44rem;
+}
+.baralho .fora{ opacity:.25; transition:opacity .3s ease; }
+.baralho .fora .carta__n{ text-decoration:line-through; }
+.baralho--completo .fora{ opacity:1; }
+.baralho--completo .fora .carta__n{ text-decoration:none; }
+
+/* --- Lição 2: escada da hierarquia --- */
+.licao > .escada{
+    list-style:none;
+    padding:0;
+    gap:0;
+    max-width:none;
+}
+.escada li{
+    display:grid;
+    grid-template-columns:2rem 12.5rem minmax(0,1fr);
+    align-items:center;
+    gap:.5rem 1rem;
+    padding-block:.6rem;
+    border-top:1px solid var(--linha);
+}
+.escada__pos{
+    font-size:1.05rem; font-weight:600;
+    color:var(--ouro-tinta);
+    font-variant-numeric:tabular-nums;
+}
+.escada__cartas{ display:flex; gap:.3rem; }
+.escada__cartas .carta{ --w:2.8rem; }
+.escada__nome{ font-weight:500; }
+.escada__nota{ display:block; font-weight:300; font-size:.95rem; color:var(--tinta-2); }
+.escada__grupo{
+    font-size:.78rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--tinta-2);
+    margin-top:.6rem;
+}
+.cola{
+    padding:.9rem 1.1rem;
+    border:1px dashed var(--linha);
+    border-radius:var(--raio);
+    font-weight:400;
+    font-variant-numeric:tabular-nums;
+}
+.cola b{ color:var(--ouro-tinta); font-weight:600; }
+
+.duelo__arena{
+    display:flex; align-items:center; justify-content:center;
+    gap:clamp(.6rem,3vw,1.5rem);
+    padding-block:.5rem;
+}
+.duelo__carta{
+    padding:0; border:0; background:none; border-radius:10px;
+    cursor:pointer;
+    transition:transform .15s ease, opacity .2s ease;
+}
+.duelo__carta .carta{ --w:clamp(5.2rem,24vw,7.5rem); display:block; }
+.duelo__carta:not(:disabled):hover{ transform:translateY(-5px); }
+.duelo__carta:disabled{ cursor:default; }
+.duelo__carta.perdeu{ opacity:.45; }
+.duelo__carta.venceu .carta{ box-shadow:0 0 0 3px var(--ouro), 0 4px 14px var(--carta-sombra); }
+
+/* --- Lição 3: diagramas de mesa --- */
+.mesas{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:1rem;
+}
+.mesas figure{ margin:0; text-align:center; }
+.mesas svg{ display:block; width:100%; max-width:17rem; height:auto; margin-inline:auto; }
+.mesas figcaption{ font-weight:500; }
+.mesas figcaption span{ display:block; font-weight:300; font-size:.9rem; color:var(--feltro-tinta-2); }
+.m-tampo{ fill:var(--feltro-fundo); stroke:var(--feltro-linha); stroke-width:1.5; }
+.m-a{ fill:var(--equipe-a); }
+.m-b{ fill:var(--equipe-b); }
+.m-letra{ font:600 14px var(--f-texto); text-anchor:middle; dominant-baseline:central; }
+.m-letra-a{ fill:var(--ouro-sobre); }
+.m-letra-b{ fill:var(--equipe-b-tinta); }
+.m-papel{ font:500 13px var(--f-texto); fill:var(--feltro-tinta); text-anchor:middle; dominant-baseline:central; }
+.m-duelo{ stroke:var(--feltro-tinta-2); stroke-width:1.2; stroke-dasharray:4 4; fill:none; }
+.legenda{ display:flex; flex-wrap:wrap; gap:.4rem 1.4rem; font-size:.9rem; color:var(--feltro-tinta-2); }
+.legenda i{ display:inline-block; width:.8rem; height:.8rem; border-radius:50%; margin-right:.4rem; vertical-align:-.05em; }
+.legenda .a{ background:var(--equipe-a); }
+.legenda .b{ background:var(--equipe-b); }
+
+/* --- Lição 4: simulador de empates --- */
+.simulador{ display:flex; flex-direction:column; gap:.7rem; }
+.simulador fieldset{
+    display:flex; flex-wrap:wrap; align-items:center; gap:.4rem 1rem;
+    margin:0; padding:0; border:0; min-width:0;
+}
+.simulador legend{ float:left; width:7.5rem; padding:0; font-weight:500; }
+.seg{
+    display:inline-flex; flex-wrap:wrap; gap:3px;
+    padding:4px;
+    border-radius:999px;
+    background:var(--feltro-fundo);
+    box-shadow:inset 0 0 0 1px var(--feltro-linha);
+}
+.seg label{ position:relative; }
+.seg input{ position:absolute; inset:0; margin:0; opacity:0; cursor:pointer; }
+.seg span{
+    display:block;
+    padding:.28rem .85rem;
+    border-radius:999px;
+    font-size:.92rem;
+    color:var(--feltro-tinta-2);
+}
+.seg input:checked + span{ background:var(--ouro); color:var(--ouro-sobre); font-weight:500; }
+.seg input:focus-visible + span{ outline:2px solid var(--feltro-tinta); outline-offset:2px; }
+.seg input:disabled{ cursor:default; }
+.seg input:disabled + span{ opacity:.35; }
+.veredito{
+    display:block;
+    padding:.9rem 1.1rem;
+    border-radius:var(--raio);
+    background:var(--feltro-fundo);
+    box-shadow:inset 0 0 0 1px var(--feltro-linha);
+}
+.veredito strong{ display:block; font-size:1.2rem; font-weight:600; color:var(--ouro); }
+
+/* --- Lição 5: escada do truco --- */
+.aposta{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:1rem 1.5rem;
+    align-items:start;
+}
+.aposta__valor{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    width:7rem; aspect-ratio:1;
+    border-radius:50%;
+    background:var(--feltro-fundo);
+    box-shadow:inset 0 0 0 2px var(--ouro);
+    text-align:center; line-height:1.1;
+}
+.aposta__valor b{ font-size:2.6rem; font-weight:600; color:var(--ouro); font-variant-numeric:tabular-nums; }
+.aposta__valor span{ font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:var(--feltro-tinta-2); }
+.falas{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.45rem; }
+.falas li{
+    max-width:22rem;
+    padding:.45rem .9rem;
+    border-radius:14px;
+    background:var(--feltro-fundo);
+    box-shadow:inset 0 0 0 1px var(--feltro-linha);
+}
+.falas li.adv{ align-self:flex-end; }
+.falas small{ display:block; font-size:.75rem; letter-spacing:.08em; text-transform:uppercase; color:var(--feltro-tinta-2); }
+.falas .canto{ font-size:1.6rem; }
+.aposta__acoes{ grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; }
+.aposta__vez{ flex-basis:100%; color:var(--feltro-tinta-2); }
+
+/* --- Lição 6: treino de envido --- */
+.mao-cartas{ display:flex; justify-content:center; gap:clamp(.5rem,2.5vw,1rem); padding-block:.4rem; }
+.mao-cartas .carta{ --w:clamp(4.8rem,22vw,6.8rem); }
+.opcoes{ display:flex; flex-wrap:wrap; justify-content:center; gap:.6rem; }
+.opcoes .btn{ min-width:4.2rem; font-size:1.1rem; font-variant-numeric:tabular-nums; }
+.opcoes .btn.certa{ background:var(--feltro-certo); border-color:var(--feltro-certo); opacity:1; }
+.opcoes .btn.errada{ background:transparent; border-color:var(--feltro-erro); color:var(--feltro-erro); opacity:1; }
+
+/* --- Lição 7: prova --- */
+.licao > .prova{ list-style:none; padding:0; gap:1.6rem; max-width:none; }
+.prova > li{ display:flex; flex-direction:column; gap:.7rem; padding-top:1.2rem; border-top:1px solid var(--linha); }
+.prova__num{ font-size:.78rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ouro-tinta); }
+.prova__pergunta{ font-weight:500; font-size:1.1rem; max-width:var(--coluna); }
+.prova__cartas{ display:flex; gap:.5rem; }
+.prova__cartas .carta{ --w:3.6rem; }
+.prova__ops{ display:grid; grid-template-columns:repeat(auto-fit,minmax(13rem,1fr)); gap:.5rem; }
+.prova__ops button{
+    padding:.6rem .9rem;
+    border:1.5px solid var(--linha);
+    border-radius:var(--raio);
+    background:var(--folha);
+    text-align:left;
+    cursor:pointer;
+}
+.prova__ops button:not(:disabled):hover{ border-color:var(--ouro); }
+.prova__ops button:disabled{ cursor:default; }
+.prova__ops button.certa{ border-color:var(--certo); background:var(--certo-fundo); font-weight:500; }
+.prova__ops button.errada{ border-color:var(--rubro-tinta); background:var(--erro-fundo); }
+.prova__explica{ max-width:var(--coluna); color:var(--tinta-2); }
+.prova__explica b{ color:var(--tinta); }
+.placar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:.8rem 1.5rem;
+    padding:1.1rem 1.3rem;
+    border-radius:var(--raio);
+    background:var(--papel-2);
+}
+.placar b{ font-size:1.6rem; font-weight:600; font-variant-numeric:tabular-nums; }
+
+/* exemplos de envido com cartas */
+.exemplos{ display:grid; grid-template-columns:repeat(auto-fit,minmax(13.5rem,1fr)); gap:1.2rem 1.5rem; }
+.exemplos figure{ margin:0; min-width:0; display:flex; flex-direction:column; gap:.6rem; }
+.exemplos [data-cartas]{ display:flex; gap:.4rem; }
+.exemplos .carta{ --w:3.6rem; }
+.exemplos figcaption{ color:var(--tinta-2); font-size:.97rem; }
+.exemplos figcaption b{ display:block; font-size:1.7rem; font-weight:600; line-height:1.1; color:var(--tinta); font-variant-numeric:tabular-nums; }
+
+.rodape{ padding-block:2rem 3rem; color:var(--tinta-2); font-size:.92rem; }
+
+/* =========================================================
+   8. TELAS ESTREITAS
+   ========================================================= */
+@media (max-width:760px){
+    .abertura__in{ grid-template-columns:minmax(0,1fr); }
+    .mesas{ grid-template-columns:minmax(0,1fr); gap:1.5rem; }
+    .escada li{ grid-template-columns:2rem minmax(0,1fr); }
+    .escada__texto{ grid-column:2; }
+    .aposta{ grid-template-columns:minmax(0,1fr); }
+    .aposta__valor{ width:5.6rem; }
+    .aposta__valor b{ font-size:2rem; }
+}
+@media (max-width:480px){
+    .trilha__marca{ display:none; }
+    .trilha__tema{ padding:.45rem; }
+    .trilha__tema span{ display:none; }   /* no celular fica só o ícone; o nome vai no aria-label */
+    .simulador legend{ float:none; width:100%; }
+}
+@media (prefers-reduced-motion:reduce){
+    html{ scroll-behavior:auto; }
+    *,*::before,*::after{ transition:none !important; }
+}
+</style>
+
+<script>
+/* Tema escolhido pelo leitor: aplicado antes do conteúdo para a página não piscar */
+try {
+    var temaSalvo = localStorage.getItem('truco-cego-tema');
+    if (temaSalvo === 'dark' || temaSalvo === 'light') document.documentElement.dataset.theme = temaSalvo;
+} catch (e) { /* sem armazenamento: segue o tema do sistema */ }
+</script>
+</head>
+<body>
+<!-- Naipes do baralho espanhol, desenhados uma vez e reutilizados com <use> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="n-espadas" viewBox="0 0 24 24">
+        <path d="M12 1.5 14.4 6v9H9.6V6z"/>
+        <rect x="6" y="15" width="12" height="2.2" rx="1"/>
+        <rect x="10.9" y="17.2" width="2.2" height="3.4"/>
+        <circle cx="12" cy="21.5" r="1.5"/>
+    </symbol>
+    <symbol id="n-paus" viewBox="0 0 24 24">
+        <path d="M9.2 3.6c.3-1.6 5.3-1.6 5.6 0l1.4 15.6c.2 2.4-8.6 2.4-8.4 0z"/>
+        <circle cx="8" cy="9" r="1.7"/>
+        <circle cx="16.3" cy="13.5" r="1.7"/>
+    </symbol>
+    <symbol id="n-ouros" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3.2a6.8 6.8 0 1 1 0 13.6 6.8 6.8 0 0 1 0-13.6zm0 2.3a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/>
+    </symbol>
+    <symbol id="n-copas" viewBox="0 0 24 24">
+        <path d="M5.5 3h13v3.5a6.5 6.5 0 0 1-13 0z"/>
+        <rect x="10.9" y="12.5" width="2.2" height="5"/>
+        <path d="M6.5 21c0-2.2 2.5-3.6 5.5-3.6s5.5 1.4 5.5 3.6z"/>
+    </symbol>
+</svg>
+
+<!-- ===================== ABERTURA ===================== -->
+<header class="abertura">
+    <div class="pagina abertura__in">
+        <div>
+            <div class="abertura__naipes" aria-hidden="true">
+                <svg><use href="#n-espadas"/></svg>
+                <svg><use href="#n-paus"/></svg>
+                <svg><use href="#n-ouros"/></svg>
+                <svg><use href="#n-copas"/></svg>
+            </div>
+            <p class="sobretitulo">Guia de aprendizado · truco gaúcho</p>
+            <h1>Truco Cego</h1>
+            <p class="abertura__texto">
+                Sete passos, do baralho ao envido. Cada lição explica uma regra e termina com um treino,
+                para você <strong>jogar enquanto aprende</strong>. No fim, uma prova de dez perguntas.
+            </p>
+        </div>
+        <div>
+            <div class="leque" data-cartas="1-espadas 1-paus 7-espadas 7-ouros" data-manilha></div>
+            <p class="leque__legenda">As quatro manilhas, da maior para a menor.</p>
+        </div>
+    </div>
+</header>
+
+<!-- ===================== NAVEGAÇÃO ===================== -->
+<nav class="trilha" aria-label="Lições">
+    <div class="pagina trilha__in">
+        <a class="trilha__marca" href="#topo">Truco Cego</a>
+        <ol class="trilha__links">
+            <li><a href="#baralho" data-licao="baralho">1. Baralho</a></li>
+            <li><a href="#hierarquia" data-licao="hierarquia">2. Hierarquia</a></li>
+            <li><a href="#mesa" data-licao="mesa">3. Mão e vaza</a></li>
+            <li><a href="#empates" data-licao="empates">4. Empates</a></li>
+            <li><a href="#truco" data-licao="truco">5. Truco</a></li>
+            <li><a href="#envido" data-licao="envido">6. Envido e flor</a></li>
+            <li><a href="#prova" data-licao="prova">7. Prova</a></li>
+            <li><a href="#glossario">Glossário</a></li>
+        </ol>
+        <span class="trilha__conta" id="conta" aria-live="polite">0/7</span>
+        <button type="button" class="trilha__tema" id="tema" aria-label="Mudar para o modo escuro">
+            <svg id="tema-lua" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+            <svg id="tema-sol" viewBox="0 0 24 24" aria-hidden="true" hidden><circle cx="12" cy="12" r="4.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span id="tema-texto">Modo escuro</span>
+        </button>
+    </div>
+    <div class="trilha__barra" aria-hidden="true"><span id="barra"></span></div>
+</nav>
+
+<main class="pagina" id="topo">
+
+<noscript><p>Os treinos e as cartas desta página precisam de JavaScript ativado.</p></noscript>
+
+<!-- ===================== LIÇÃO 1 ===================== -->
+<section class="licao" id="baralho">
+    <header class="licao__cab">
+        <p class="licao__num">Lição 1</p>
+        <h2>O baralho espanhol</h2>
+        <p class="licao__meta">Você vai saber quais cartas entram no jogo e quais ficam na caixa.</p>
+    </header>
+
+    <p>
+        O truco gaúcho se joga com o <strong>baralho espanhol</strong>. Ele vem com 50 cartas:
+        quatro naipes (espadas, paus, ouros e copas) numerados de 1 a 12, mais dois coringas.
+        Para o truco, sobram <strong>40 cartas</strong>.
+    </p>
+
+    <div class="mesa">
+        <p class="mesa__rotulo">Veja na mesa</p>
+        <h3 id="baralho-titulo">40 cartas em jogo</h3>
+        <p>As cartas apagadas saem do baralho antes da partida.</p>
+        <div class="baralho" id="baralho-grade"></div>
+        <div class="mesa__rodape">
+            <button type="button" class="btn btn--fantasma" id="baralho-botao" aria-pressed="false">Mostrar o baralho completo</button>
+        </div>
+    </div>
+
+    <div class="nota">
+        <p class="nota__rotulo">Atente-se aos detalhes</p>
+        <ol>
+            <li>Remova os dois coringas.</li>
+            <li>Remova todos os 8 e todos os 9.</li>
+            <li>Zele pelas cartas. Relevos e marcas serão notados por jogadores maliciosos, e isso lhes dá vantagem.</li>
+        </ol>
+    </div>
+
+    <div class="nota nota--dica">
+        <p class="nota__rotulo">Como reconhecer o naipe</p>
+        <p>
+            No baralho espanhol, a moldura de cada carta tem falhas que indicam o naipe:
+            ouros não tem falha, copas tem uma, espadas tem duas e paus tem três.
+            As cartas deste guia seguem esse desenho. As figuras são a sota (10), o cavalo (11) e o rei (12).
+        </p>
+    </div>
+
+    <footer class="licao__fim"><button type="button" class="btn-concluir" data-concluir="baralho" aria-pressed="false">Marcar lição como aprendida</button></footer>
+</section>
+
+<!-- ===================== LIÇÃO 2 ===================== -->
+<section class="licao" id="hierarquia">
+    <header class="licao__cab">
+        <p class="licao__num">Lição 2</p>
+        <h2>Hierarquia das cartas</h2>
+        <p class="licao__meta">Você vai saber dizer, entre duas cartas quaisquer, qual vence.</p>
+    </header>
+
+    <p>
+        São 14 degraus, do mais forte para o mais fraco. Os quatro primeiros são as cartas
+        <strong>especiais</strong> do jogo, as <strong>manilhas</strong>: cada uma é única e ganha de todas abaixo dela.
+    </p>
+
+    <p class="escada__grupo">Manilhas</p>
+    <ol class="escada" id="escada-manilhas"></ol>
+    <p class="escada__grupo">Cartas comuns</p>
+    <ol class="escada" id="escada-comuns"></ol>
+
+    <div class="nota">
+        <p class="nota__rotulo">Naipe não desempata</p>
+        <p>
+            Fora das manilhas, os naipes não têm hierarquia. Se eu jogar um 1 de copas contra o seu 1 de ouros,
+            dá <strong>empate</strong>. A lição 4 mostra o que acontece depois.
+        </p>
+    </div>
+
+    <p class="cola">
+        <b>Cola rápida:</b> espadão › bastião › 7 de espadas › 7 de ouros › 3 › 2 › 1 › 12 › 11 › 10 › 7 › 6 › 5 › 4
+    </p>
+
+    <div class="mesa" id="duelo">
+        <p class="mesa__rotulo">Treino</p>
+        <h3>Qual carta vence?</h3>
+        <p>Toque na carta mais forte. Se as duas valem o mesmo, toque em Empate.</p>
+        <div class="duelo__arena">
+            <button type="button" class="duelo__carta" id="duelo-a"></button>
+            <button type="button" class="btn btn--fantasma" id="duelo-empate">Empate</button>
+            <button type="button" class="duelo__carta" id="duelo-b"></button>
+        </div>
+        <p class="retorno" id="duelo-retorno" role="status">Escolha uma carta para começar.</p>
+        <div class="mesa__rodape">
+            <button type="button" class="btn" id="duelo-proxima" hidden>Próxima dupla</button>
+            <span id="duelo-placar">Acertos: 0 de 0</span>
+        </div>
+    </div>
+
+    <footer class="licao__fim"><button type="button" class="btn-concluir" data-concluir="hierarquia" aria-pressed="false">Marcar lição como aprendida</button></footer>
+</section>
+
+<!-- ===================== LIÇÃO 3 ===================== -->
+<section class="licao" id="mesa">
+    <header class="licao__cab">
+        <p class="licao__num">Lição 3</p>
+        <h2>Mão, vaza, o mão e o pé</h2>
+        <p class="licao__meta">Você vai entender como a mesa se organiza e como uma rodada acontece.</p>
+    </header>
+
+    <p>
+        Dá para jogar truco de três formas: <strong>de mano</strong> (um contra um), <strong>de par</strong>
+        (dois contra dois) e <strong>de trio</strong> (três contra três). Cada modalidade tem regras próprias,
+        mas a base é a mesma. Este guia explica o jogo <strong>de mano</strong>.
+    </p>
+
+    <div class="mesa">
+        <p class="mesa__rotulo">Veja na mesa</p>
+        <h3>Onde cada um senta</h3>
+        <p>
+            Parceiros nunca sentam lado a lado: as equipes se alternam em volta da mesa.
+            Daí o nome Truco Cego, porque você não vê as cartas dos seus aliados.
+        </p>
+        <div class="mesas" id="mesas"></div>
+        <p class="legenda">
+            <span><i class="a"></i>Equipe do pé</span>
+            <span><i class="b"></i>Equipe do mão</span>
+            <span>As cartas são dadas no sentido anti-horário, começando pelo mão.</span>
+        </p>
+    </div>
+
+    <h3>As palavras da mesa</h3>
+    <dl class="termos">
+        <div><dt>Mão</dt><dd>É como se chama a rodada. Termina quando alguém a vence, e então vem a próxima.</dd></div>
+        <div><dt>Vaza</dt><dd>Cada disputa dentro da mão. São até três, uma para cada carta.</dd></div>
+        <div><dt>O mão</dt><dd>O primeiro jogador a jogar na rodada.</dd></div>
+        <div><dt>O pé</dt><dd>O último a jogar. É ele quem distribui as cartas.</dd></div>
+    </dl>
+
+    <h3>Como o pé distribui as cartas</h3>
+    <p>Cada jogador recebe 3 cartas. O pé segue esta ordem:</p>
+    <ol>
+        <li>Antes de dar as cartas, pede um <strong>corte</strong> no maço ao jogador à sua esquerda. De mano, ao jogador à sua frente.</li>
+        <li>Entrega as cartas começando pelo jogador à sua <strong>direita</strong> e segue nesse sentido, o anti-horário. De mano, começa pelo jogador à frente.</li>
+        <li>Assim, o pé é o último a receber.</li>
+        <li>Terminada a distribuição, deixa o maço (o resto do baralho) à sua direita, que é a esquerda do mão. De mano, basta esticar o braço direito para a frente, de modo que o maço fique à esquerda do mão. É o sinal de que ele deve começar a vaza.</li>
+    </ol>
+
+    <div class="nota nota--dica">
+        <p class="nota__rotulo">Só nas partidas de trio: festa e testa</p>
+        <p>
+            As rodadas alternam entre <strong>festa</strong> e <strong>testa</strong>. Na festa, todos jogam juntos.
+            Na testa, acontecem três disputas de mano, cada jogador contra o adversário que está do lado oposto da mesa,
+            a dois jogadores de distância. Por isso o pé deve cantar <span class="canto">Festa!</span> ou
+            <span class="canto">Testa!</span> antes de largar o maço à direita.
+        </p>
+    </div>
+
+    <h3>Como se joga uma mão</h3>
+    <ol>
+        <li>O mão joga uma carta na mesa. O pé joga outra.</li>
+        <li>A carta de maior valor na hierarquia <strong>vence a vaza</strong>.</li>
+        <li>Quem ganhou a vaza começa a próxima.</li>
+        <li>São 3 cartas e 3 disputas: <strong>quem ganhar 2 vazas vence a mão</strong>. Se o mesmo jogador vence a primeira e a segunda, a terceira nem é jogada.</li>
+    </ol>
+
+    <footer class="licao__fim"><button type="button" class="btn-concluir" data-concluir="mesa" aria-pressed="false">Marcar lição como aprendida</button></footer>
+</section>
+
+<!-- ===================== LIÇÃO 4 ===================== -->
+<section class="licao" id="empates">
+    <header class="licao__cab">
+        <p class="licao__num">Lição 4</p>
+        <h2>Empates</h2>
+        <p class="licao__meta">Você vai saber quem leva a mão quando uma ou mais vazas empatam.</p>
+    </header>
+
+    <p>
+        Duas cartas do mesmo degrau empatam a vaza. Existem cinco casos possíveis, e uma ideia resolve quase todos:
+        <strong>a primeira vaza vale mais do que as outras</strong>.
+    </p>
+
+    <div class="tabela">
+        <table>
+            <thead>
+                <tr><th scope="col">Se empatar</th><th scope="col">Quem vence a mão</th></tr>
+            </thead>
+            <tbody>
+                <tr><th scope="row">A primeira vaza</th><td>Quem vencer a segunda.</td></tr>
+                <tr><th scope="row">A segunda vaza</th><td>Quem venceu a primeira.</td></tr>
+                <tr><th scope="row">A terceira vaza</th><td>Quem venceu a primeira.</td></tr>
+                <tr><th scope="row">A primeira e a segunda</th><td>Quem vencer a terceira.</td></tr>
+                <tr><th scope="row">As três vazas</th><td>Quem for o mão.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mesa">
+        <p class="mesa__rotulo">Simulador</p>
+        <h3>Monte uma mão e veja quem leva</h3>
+        <p>Escolha o resultado de cada vaza. O veredito mostra o vencedor e a regra usada.</p>
+        <form class="simulador" id="sim-empate"></form>
+        <output class="veredito" id="sim-veredito" for="sim-empate"></output>
+    </div>
+
+    <div class="nota nota--dica">
+        <p class="nota__rotulo">Dica</p>
+        <p>Vencer a primeira vaza dá vantagem: depois dela, qualquer empate é seu.</p>
+    </div>
+
+    <footer class="licao__fim"><button type="button" class="btn-concluir" data-concluir="empates" aria-pressed="false">Marcar lição como aprendida</button></footer>
+</section>
+
+<!-- ===================== LIÇÃO 5 ===================== -->
+<section class="licao" id="truco">
+    <header class="licao__cab">
+        <p class="licao__num">Lição 5</p>
+        <h2>Truco</h2>
+        <p class="licao__meta">Você vai saber quanto vale cada canto e o que acontece quando alguém foge.</p>
+    </header>
+
+    <p>
+        Se nada for pedido, quem vencer a mão leva apenas <strong>1 ponto</strong>.
+        Uma partida de mano geralmente vai a <strong>18 pontos</strong>.
+    </p>
+    <p>
+        Para dar mais graça ao jogo, você pode desafiar o oponente cantando <span class="canto">Truco!</span>
+        O jogo pausa e espera a resposta. Quem recebe o canto tem três saídas: aceitar, fugir ou aumentar.
+        Quando ele aumenta, os papéis se invertem e é você quem responde.
+    </p>
+
+    <div class="tabela">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Canto</th>
+                    <th scope="col">Se a resposta for "Quero", a mão vale</th>
+                    <th scope="col">Se for "Não quero", quem cantou leva</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><th scope="row">Truco</th><td>2 pontos</td><td>1 ponto</td></tr>
+                <tr><th scope="row">Retruco</th><td>3 pontos</td><td>2 pontos</td></tr>
+                <tr><th scope="row">Quero vale quatro</th><td>4 pontos</td><td>3 pontos</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mesa">
+        <p class="mesa__rotulo">Simulador</p>
+        <h3>Suba a aposta, um canto por vez</h3>
+        <p>Você cantou truco. Escolha cada resposta e veja quanto a mão passa a valer e quem leva os pontos.</p>
+        <div class="aposta">
+            <div class="aposta__valor"><b id="truco-valor">1</b><span id="truco-unidade">ponto em jogo</span></div>
+            <ol class="falas" id="truco-falas"></ol>
+            <div class="aposta__acoes" id="truco-acoes"></div>
+        </div>
+        <p class="retorno" id="truco-retorno" role="status"></p>
+    </div>
+
+    <div class="nota nota--dica">
+        <p class="nota__rotulo">Regra de bolso</p>
+        <p>Quem foge entrega o que a mão <strong>já valia</strong> antes do último canto. Aceitar sobe um ponto.</p>
+    </div>
+
+    <footer class="licao__fim"><button type="button" class="btn-concluir" data-concluir="truco" aria-pressed="false">Marcar lição como aprendida</button></footer>
+</section>
+
+<!-- ===================== LIÇÃO 6 ===================== -->
+<section class="licao" id="envido">
+    <header class="licao__cab">
+        <p class="licao__num">Lição 6</p>
+        <h2>Envido e flor</h2>
+        <p class="licao__meta">Você vai saber calcular o seu envido e quantos pontos cada canto vale.</p>
+    </header>
+
+    <p>
+        O envido é uma <strong>disputa preliminar</strong>: acontece no início da mão, antes do jogo em si,
+        e é uma boa forma de tirar pontos do adversário. Canta-se <span class="canto">Envido!</span>
+    </p>
+    <p>
+        Aqui, <strong>esqueça a hierarquia</strong>. O que conta é o número impresso na carta.
+        O 1 de espadas vale só 1, e o 4, antes rejeitado, vale mais do que ele.
+        No fundo, o envido é uma disputa para ver quem tem a maior carta na mão, com duas regras que mudam tudo.
+    </p>
+
+    <h3>As duas regras do envido</h3>
+    <ol>
+        <li><strong>As figuras valem 0.</strong> Sota (10), cavalo (11) e rei (12) não somam nada. Valer 0 não é o mesmo que não valer: elas ainda contam como carta do naipe.</li>
+        <li><strong>Duas cartas do mesmo naipe ganham bônus de 20.</strong> Você soma as duas e acrescenta 20. Duas figuras do mesmo naipe valem só o bônus: 20.</li>
+    </ol>
+
+    <div class="tabela">
+        <table>
+            <thead>
+                <tr><th scope="col">Carta</th><th scope="col">7</th><th scope="col">6</th><th scope="col">5</th><th scope="col">4</th><th scope="col">3</th><th scope="col">2</th><th scope="col">1</th><th scope="col">12, 11 e 10</th></tr>
+            </thead>
+            <tbody>
+                <tr><th scope="row">Vale no envido</th><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="exemplos">
+        <figure>
+            <div data-cartas="7-espadas 6-espadas 12-copas"></div>
+            <figcaption><b>33</b> 7 e 6 de espadas: 20 + 7 + 6. É o maior envido do jogo.</figcaption>
+        </figure>
+        <figure>
+            <div data-cartas="12-ouros 11-ouros 4-paus"></div>
+            <figcaption><b>20</b> Rei e cavalo de ouros: 20 + 0 + 0. Vale mais do que o 4 sozinho.</figcaption>
+        </figure>
+        <figure>
+            <div data-cartas="5-copas 2-espadas 11-paus"></div>
+            <figcaption><b>5</b> Nenhum naipe repetido: vale a maior carta.</figcaption>
+        </figure>
+    </div>
+
+    <div class="mesa">
+        <p class="mesa__rotulo">Treino</p>
+        <h3 id="envido-pergunta">Quanto vale o envido desta mão?</h3>
+        <div class="mao-cartas" id="envido-mao"></div>
+        <div class="opcoes" id="envido-opcoes"></div>
+        <p class="retorno" id="envido-retorno" role="status">Escolha um valor.</p>
+        <div class="mesa__rodape">
+            <button type="button" class="btn" id="envido-proxima" hidden>Próxima mão</button>
+            <span id="envido-placar">Acertos: 0 de 0</span>
+        </div>
+    </div>
+
+    <h3>Quantos pontos o envido vale</h3>
+    <p>
+        Quem recebe o canto pode aceitar, fugir ou aumentar com outro <span class="canto">Envido!</span>
+        ou com <span class="canto">Real envido!</span>, que vale 3 em vez de 2.
+        Aumentar significa aceitar o que já foi pedido e querer mais.
+    </p>
+    <div class="tabela">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">O que foi cantado</th>
+                    <th scope="col">Com "Quero", o vencedor leva</th>
+                    <th scope="col">Com "Não quero", quem cantou por último leva</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><th scope="row">Envido</th><td>2 pontos</td><td>1 ponto</td></tr>
+                <tr><th scope="row">Envido + envido</th><td>4 pontos (2 + 2)</td><td>2 pontos</td></tr>
+                <tr><th scope="row">Real envido</th><td>3 pontos</td><td>1 ponto</td></tr>
+                <tr><th scope="row">Envido + real envido</th><td>5 pontos (2 + 3)</td><td>2 pontos</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p>
+        A fuga segue a mesma lógica do truco: quem foge entrega os pontos que <strong>já estavam valendo</strong>
+        antes do último canto. Se você pede envido e o adversário pede outro em cima, ele aceitou os seus 2 pontos e quer mais.
+        Fugir nessa hora custa os 2 que já estavam na mesa.
+    </p>
+
+    <h3>Nas outras modalidades e no empate</h3>
+    <p>
+        De par e de trio, <strong>todos</strong> cantam o seu envido, começando pelo mão.
+        Quem cantar o maior número leva os pontos para a sua equipe. Em caso de empate, ganha a equipe do mão.
+    </p>
+
+    <div class="nota nota--dica">
+        <p class="nota__rotulo">Perceba!</p>
+        <p>Se você está na equipe do mão e tem envido 33, a vitória é garantida. Aumente o valor da rodada!</p>
+    </div>
+
+    <h3>Flor</h3>
+    <p>
+        <strong>Três cartas do mesmo naipe</strong> formam uma flor. Quem tem flor canta <span class="canto">Flor!</span>
+        no lugar do envido e leva <strong>3 pontos</strong>. Se os dois lados têm flor, compara-se o valor:
+        20 mais a soma das três cartas, com as figuras valendo 0. A maior flor possível é 7, 6 e 5 do mesmo naipe, que vale 38.
+    </p>
+    <div class="nota">
+        <p class="nota__rotulo">Combine antes de jogar</p>
+        <p>As regras de resposta à flor, como a contra-flor, mudam de mesa para mesa. Acerte com os outros jogadores antes da primeira mão.</p>
+    </div>
+
+    <footer class="licao__fim"><button type="button" class="btn-concluir" data-concluir="envido" aria-pressed="false">Marcar lição como aprendida</button></footer>
+</section>
+
+<!-- ===================== LIÇÃO 7 ===================== -->
+<section class="licao" id="prova">
+    <header class="licao__cab">
+        <p class="licao__num">Lição 7</p>
+        <h2>Prova final</h2>
+        <p class="licao__meta">Dez perguntas sobre tudo o que você viu. Cada resposta vem com a explicação.</p>
+    </header>
+
+    <ol class="prova" id="quiz"></ol>
+
+    <div class="placar" id="quiz-placar" role="status">
+        <span><b id="quiz-nota">0/10</b></span>
+        <span id="quiz-msg">Responda às perguntas para ver sua nota.</span>
+        <button type="button" class="btn-concluir" id="quiz-refazer" hidden>Refazer a prova</button>
+    </div>
+</section>
+
+<!-- ===================== GLOSSÁRIO ===================== -->
+<section class="licao" id="glossario">
+    <header class="licao__cab">
+        <p class="licao__num">Consulta</p>
+        <h2>Glossário</h2>
+    </header>
+    <dl class="termos">
+        <div><dt>Manilha</dt><dd>As quatro cartas especiais: 1 de espadas, 1 de paus, 7 de espadas e 7 de ouros.</dd></div>
+        <div><dt>Espadão</dt><dd>Apelido do 1 de espadas, a maior carta do jogo.</dd></div>
+        <div><dt>Bastião</dt><dd>Apelido do 1 de paus, a segunda maior.</dd></div>
+        <div><dt>Figuras</dt><dd>Sota (10), cavalo (11) e rei (12). No envido, valem 0.</dd></div>
+        <div><dt>Mão</dt><dd>A rodada. Vale 1 ponto se ninguém cantar nada.</dd></div>
+        <div><dt>Vaza</dt><dd>Cada uma das até três disputas de carta dentro de uma mão.</dd></div>
+        <div><dt>O mão</dt><dd>O primeiro a jogar. Vence quando as três vazas empatam e nos empates de envido.</dd></div>
+        <div><dt>O pé</dt><dd>O último a jogar e quem distribui as cartas.</dd></div>
+        <div><dt>Maço</dt><dd>O resto do baralho depois da distribuição.</dd></div>
+        <div><dt>Cantar</dt><dd>Anunciar em voz alta um desafio: truco, envido, flor.</dd></div>
+        <div><dt>Quero / Não quero</dt><dd>Aceitar o desafio ou fugir dele, entregando os pontos que já valiam.</dd></div>
+        <div><dt>Festa e testa</dt><dd>Os dois tipos de rodada do jogo de trio: todos juntos ou três duelos de mano.</dd></div>
+    </dl>
+</section>
+
+<p class="rodape">Truco Cego: você não vê as cartas dos seus parceiros. Boa mesa.</p>
+
+</main>
+
+<script>
+(() => {
+'use strict';
+
+/* =========================================================
+   DADOS DO JOGO
+   ========================================================= */
+const NAIPES  = ['espadas', 'paus', 'ouros', 'copas'];
+const NUMEROS = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];      // sem 8 e 9
+const FIGURAS = { 10: 'Sota', 11: 'Cavalo', 12: 'Rei' };
+const BARALHO = NAIPES.flatMap(s => NUMEROS.map(n => ({ n, s })));
+
+/** Força da carta na hierarquia do truco: 14 (espadão) até 1 (os 4). */
+function forca(n, s) {
+    if (n === 1 && s === 'espadas') return 14;
+    if (n === 1 && s === 'paus')    return 13;
+    if (n === 7 && s === 'espadas') return 12;
+    if (n === 7 && s === 'ouros')   return 11;
+    return { 3: 10, 2: 9, 1: 8, 12: 7, 11: 6, 10: 5, 7: 4, 6: 3, 5: 2, 4: 1 }[n];
+}
+/** Valor da carta no envido: o número impresso; figuras valem 0. */
+const valorEnvido = n => (n >= 10 ? 0 : n);
+
+const nomeCarta = (n, s) => (FIGURAS[n] ? `${FIGURAS[n].toLowerCase()} (${n})` : n) + ' de ' + s;
+const maiuscula = t => t.charAt(0).toUpperCase() + t.slice(1);
+
+/* =========================================================
+   UTILITÁRIOS
+   ========================================================= */
+const $  = (sel, raiz = document) => raiz.querySelector(sel);
+const $$ = (sel, raiz = document) => [...raiz.querySelectorAll(sel)];
+const sorteia = lista => lista[Math.floor(Math.random() * lista.length)];
+function embaralha(lista) {
+    const a = [...lista];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+const plural = (q, um, varios) => `${q} ${q === 1 ? um : varios}`;
+
+/** Devolve o HTML de uma carta. `classes` aceita, por exemplo, "carta--mini". */
+function carta(n, s, classes = '') {
+    return `<span class="carta ${classes}" data-naipe="${s}" role="img" aria-label="${nomeCarta(n, s)}">` +
+             `<span class="carta__in">` +
+               `<span class="carta__n">${n}</span>` +
+               `<svg class="carta__naipe" aria-hidden="true"><use href="#n-${s}"/></svg>` +
+               (FIGURAS[n] ? `<span class="carta__fig">${FIGURAS[n]}</span>` : '') +
+             `</span></span>`;
+}
+
+/* Qualquer elemento com data-cartas="7-espadas 6-espadas" é preenchido com cartas */
+$$('[data-cartas]').forEach(el => {
+    const extra = el.hasAttribute('data-manilha') ? 'carta--manilha' : '';
+    el.innerHTML = el.dataset.cartas.split(' ')
+        .map(c => { const [n, s] = c.split('-'); return carta(Number(n), s, extra); })
+        .join('');
+});
+
+/* =========================================================
+   LIÇÃO 1 · grade do baralho
+   ========================================================= */
+(() => {
+    const grade = $('#baralho-grade'), botao = $('#baralho-botao'), titulo = $('#baralho-titulo');
+    const linhas = NAIPES.map(s => {
+        const cartas = Array.from({ length: 12 }, (_, i) => i + 1)
+            .map(n => carta(n, s, 'carta--mini' + (n === 8 || n === 9 ? ' fora' : '')))
+            .join('');
+        return `<div><p class="baralho__naipe"><svg aria-hidden="true"><use href="#n-${s}"/></svg>${s}</p>` +
+               `<div class="baralho__linha">${cartas}</div></div>`;
+    });
+    const coringa = `<span class="carta carta--mini fora" role="img" aria-label="coringa"><span class="carta__in"><span class="carta__n">★</span></span></span>`;
+    linhas.push(`<div><p class="baralho__naipe">coringas</p><div class="baralho__linha">${coringa}${coringa}</div></div>`);
+    grade.innerHTML = linhas.join('');
+
+    botao.addEventListener('click', () => {
+        const completo = grade.classList.toggle('baralho--completo');
+        botao.setAttribute('aria-pressed', completo);
+        botao.textContent = completo ? 'Remover coringas, 8 e 9' : 'Mostrar o baralho completo';
+        titulo.textContent = completo ? '50 cartas na caixa' : '40 cartas em jogo';
+    });
+})();
+
+/* =========================================================
+   LIÇÃO 2 · escada da hierarquia e treino "qual carta vence?"
+   ========================================================= */
+(() => {
+    const todos = n => NAIPES.map(s => [n, s]);
+    const ESCADA = [
+        { nome: '1 de espadas', nota: 'O espadão. Nada ganha dele.', cartas: [[1, 'espadas']] },
+        { nome: '1 de paus', nota: 'O bastião.', cartas: [[1, 'paus']] },
+        { nome: '7 de espadas', cartas: [[7, 'espadas']] },
+        { nome: '7 de ouros', cartas: [[7, 'ouros']] },
+        { nome: 'Todos os 3', cartas: todos(3) },
+        { nome: 'Todos os 2', cartas: todos(2) },
+        { nome: 'O resto dos 1', nota: '“O resto” porque dois dos 1 já estão lá em cima, nas manilhas. Sobram o 1 de ouros e o 1 de copas.', cartas: [[1, 'ouros'], [1, 'copas']] },
+        { nome: 'Todos os 12', nota: 'Os reis.', cartas: todos(12) },
+        { nome: 'Todos os 11', nota: 'Os cavalos.', cartas: todos(11) },
+        { nome: 'Todos os 10', nota: 'As sotas.', cartas: todos(10) },
+        { nome: 'O resto dos 7', nota: 'O 7 de espadas e o 7 de ouros são manilhas. Sobram o 7 de copas e o 7 de paus.', cartas: [[7, 'copas'], [7, 'paus']] },
+        { nome: 'Todos os 6', cartas: todos(6) },
+        { nome: 'Todos os 5', cartas: todos(5) },
+        { nome: 'Todos os 4', nota: 'As cartas mais fracas do truco.', cartas: todos(4) },
+    ];
+    const degrau = (d, i) =>
+        `<li><span class="escada__pos">${i + 1}º</span>` +
+        `<span class="escada__cartas">${d.cartas.map(([n, s]) => carta(n, s, i < 4 ? 'carta--manilha' : '')).join('')}</span>` +
+        `<span class="escada__texto"><span class="escada__nome">${d.nome}</span>` +
+        (d.nota ? `<span class="escada__nota">${d.nota}</span>` : '') + `</span></li>`;
+    $('#escada-manilhas').innerHTML = ESCADA.slice(0, 4).map(degrau).join('');
+    $('#escada-comuns').innerHTML   = ESCADA.slice(4).map((d, i) => degrau(d, i + 4)).join('');
+
+    /* --- treino --- */
+    const btA = $('#duelo-a'), btB = $('#duelo-b'), btE = $('#duelo-empate');
+    const retorno = $('#duelo-retorno'), proxima = $('#duelo-proxima'), placar = $('#duelo-placar');
+    let a, b, certas = 0, total = 0, sequencia = 0;
+
+    function novaDupla() {
+        a = sorteia(BARALHO); b = null;
+        const sorte = Math.random();
+        if (sorte < 0.18) {                       // às vezes, um empate
+            const iguais = BARALHO.filter(c => c !== a && forca(c.n, c.s) === forca(a.n, a.s));
+            if (iguais.length) b = sorteia(iguais);
+        } else if (sorte < 0.55) {                // muitas vezes, as cartas que mais confundem
+            a = sorteia(BARALHO.filter(c => c.n === 1 || c.n === 7));
+        }
+        while (!b) {
+            const c = sorteia(BARALHO);
+            if (forca(c.n, c.s) !== forca(a.n, a.s)) b = c;
+        }
+        if (Math.random() < 0.5) [a, b] = [b, a];
+        btA.innerHTML = carta(a.n, a.s);
+        btB.innerHTML = carta(b.n, b.s);
+        [btA, btB, btE].forEach(x => { x.disabled = false; x.classList.remove('venceu', 'perdeu'); });
+        retorno.textContent = 'Qual das duas vence a vaza?';
+        retorno.removeAttribute('data-ok');
+        proxima.hidden = true;
+    }
+
+    function explica(fa, fb) {
+        if (fa === fb) return `Empate: ${nomeCarta(a.n, a.s)} e ${nomeCarta(b.n, b.s)} estão no mesmo degrau, e naipe não desempata.`;
+        const [v, p] = fa > fb ? [a, b] : [b, a];
+        let t = `${maiuscula(nomeCarta(v.n, v.s))} vence: está no ${15 - forca(v.n, v.s)}º degrau, e ${nomeCarta(p.n, p.s)} está no ${15 - forca(p.n, p.s)}º.`;
+        const resto = c => (c.n === 1 || c.n === 7) && forca(c.n, c.s) < 11;
+        if (resto(p) && p.n === 7) t += ' Só o 7 de espadas e o 7 de ouros são manilhas. Os outros 7 ficam abaixo das figuras.';
+        if (resto(p) && p.n === 1) t += ' Só o 1 de espadas e o 1 de paus são manilhas. Os outros 1 ficam abaixo dos 2.';
+        return t;
+    }
+
+    function responde(escolha) {
+        const fa = forca(a.n, a.s), fb = forca(b.n, b.s);
+        const certa = fa === fb ? 'empate' : fa > fb ? 'a' : 'b';
+        const acertou = escolha === certa;
+        total++; if (acertou) { certas++; sequencia++; } else sequencia = 0;
+        [btA, btB, btE].forEach(x => { x.disabled = true; });
+        if (certa !== 'empate') {
+            (certa === 'a' ? btA : btB).classList.add('venceu');
+            (certa === 'a' ? btB : btA).classList.add('perdeu');
+        }
+        retorno.dataset.ok = acertou ? '1' : '0';
+        retorno.textContent = (acertou ? 'Certo. ' : 'Ainda não. ') + explica(fa, fb);
+        placar.textContent = `Acertos: ${certas} de ${total}` + (sequencia > 1 ? ` · ${sequencia} seguidos` : '');
+        proxima.hidden = false;
+        proxima.focus();
+    }
+
+    btA.addEventListener('click', () => responde('a'));
+    btB.addEventListener('click', () => responde('b'));
+    btE.addEventListener('click', () => responde('empate'));
+    proxima.addEventListener('click', novaDupla);
+    novaDupla();
+    retorno.textContent = 'Escolha uma carta para começar.';
+})();
+
+/* =========================================================
+   LIÇÃO 3 · diagramas de mesa (SVG gerado)
+   ========================================================= */
+(() => {
+    /** Desenha uma mesa com `n` lugares. O pé fica embaixo; o mão, à direita dele. */
+    function mesaSVG(n, descricao, testa) {
+        const C = 120, R = 74, RL = 114;
+        const ponto = (i, raio) => {
+            const ang = (90 - i * 360 / n) * Math.PI / 180;   // anti-horário a partir de baixo
+            return [C + raio * Math.cos(ang), C + raio * Math.sin(ang)].map(v => v.toFixed(1));
+        };
+        let s = `<svg viewBox="-20 -6 280 252" role="img" aria-label="${descricao}">` +
+                `<circle class="m-tampo" cx="${C}" cy="${C}" r="50"/>`;
+        if (testa) {
+            for (let i = 0; i < n / 2; i++) {
+                const [x1, y1] = ponto(i, R), [x2, y2] = ponto(i + n / 2, R);
+                s += `<line class="m-duelo" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+            }
+        }
+        for (let i = 0; i < n; i++) {
+            const eq = i % 2 === 0 ? 'a' : 'b';
+            const [x, y] = ponto(i, R), [lx, ly] = ponto(i, RL);
+            s += `<circle class="m-${eq}" cx="${x}" cy="${y}" r="16"/>` +
+                 `<text class="m-letra m-letra-${eq}" x="${x}" y="${y}">${eq.toUpperCase()}</text>`;
+            if (i === 0) s += `<text class="m-papel" x="${lx}" y="${ly}">pé</text>`;
+            if (i === 1) s += `<text class="m-papel" x="${lx}" y="${ly}">mão</text>`;
+        }
+        return s + '</svg>';
+    }
+    const MESAS = [
+        [2, 'De mano', '1 contra 1, frente a frente', 'Mesa de mano: dois jogadores frente a frente; o pé embaixo e o mão em cima.'],
+        [4, 'De par', '2 contra 2, parceiros de frente', 'Mesa de par: quatro jogadores com as equipes alternadas; o mão à direita do pé.'],
+        [6, 'De trio', '3 contra 3; as linhas mostram os duelos da testa', 'Mesa de trio: seis jogadores com as equipes alternadas e linhas ligando os adversários opostos.'],
+    ];
+    $('#mesas').innerHTML = MESAS.map(([n, titulo, sub, desc]) =>
+        `<figure>${mesaSVG(n, desc, n === 6)}<figcaption>${titulo}<span>${sub}</span></figcaption></figure>`).join('');
+})();
+
+/* =========================================================
+   LIÇÃO 4 · simulador de empates
+   ========================================================= */
+(() => {
+    const form = $('#sim-empate'), saida = $('#sim-veredito');
+    const grupo = (nome, legenda, opcoes, marcada) =>
+        `<fieldset><legend>${legenda}</legend><div class="seg">` +
+        opcoes.map(([valor, rotulo]) =>
+            `<label><input type="radio" name="${nome}" id="${nome}-${valor}" value="${valor}"${valor === marcada ? ' checked' : ''}><span>${rotulo}</span></label>`
+        ).join('') + `</div></fieldset>`;
+    const TRES = [['voce', 'Você'], ['empate', 'Empate'], ['adv', 'Adversário']];
+    form.innerHTML =
+        grupo('v1', '1ª vaza', TRES, 'empate') +
+        grupo('v2', '2ª vaza', TRES, 'voce') +
+        grupo('v3', '3ª vaza', TRES, 'adv') +
+        grupo('mao', 'Quem é o mão', [['voce', 'Você'], ['adv', 'Adversário']], 'adv');
+
+    /** Aplica as regras de empate. Devolve quem vence, o motivo e quantas vazas foram jogadas. */
+    function resolve(v1, v2, v3, mao) {
+        if (v1 !== 'empate') {
+            if (v2 === v1)       return [v1, 'Venceu a primeira e a segunda: duas vazas ganhas, a mão acaba aí.', 2];
+            if (v2 === 'empate') return [v1, 'Empatou a segunda: vence quem ganhou a primeira.', 2];
+            if (v3 === 'empate') return [v1, 'Cada um ganhou uma vaza e a terceira empatou: vence quem ganhou a primeira.', 3];
+            return [v3, 'Cada um ganhou uma das duas primeiras: a terceira vaza decide.', 3];
+        }
+        if (v2 !== 'empate') return [v2, 'Empatou a primeira: quem vence a segunda leva a mão.', 2];
+        if (v3 !== 'empate') return [v3, 'Empataram a primeira e a segunda: a terceira decide.', 3];
+        return [mao, 'As três vazas empataram: vence quem é o mão.', 3];
+    }
+
+    function atualiza() {
+        const d = new FormData(form);
+        const [quem, motivo, jogadas] = resolve(d.get('v1'), d.get('v2'), d.get('v3') || 'empate', d.get('mao'));
+        $$('input[name="v3"]', form).forEach(i => { i.disabled = jogadas === 2; });
+        saida.innerHTML = `<strong>${quem === 'voce' ? 'Você vence a mão' : 'O adversário vence a mão'}</strong>` +
+            motivo + (jogadas === 2 ? ' A terceira vaza não é jogada.' : '');
+    }
+    form.addEventListener('change', atualiza);
+    form.addEventListener('submit', ev => ev.preventDefault());
+    atualiza();
+})();
+
+/* =========================================================
+   LIÇÃO 5 · simulador da aposta do truco
+   ========================================================= */
+(() => {
+    const CANTOS = [
+        { nome: 'Truco!',             vale: 2, foge: 1 },
+        { nome: 'Retruco!',           vale: 3, foge: 2 },
+        { nome: 'Quero vale quatro!', vale: 4, foge: 3 },
+    ];
+    const NOME = { voce: 'Você', adv: 'O adversário' };
+    const valor = $('#truco-valor'), unidade = $('#truco-unidade'), falas = $('#truco-falas');
+    const acoes = $('#truco-acoes'), retorno = $('#truco-retorno');
+    const quemCantou   = nivel => (nivel % 2 === 0 ? 'voce' : 'adv');
+    const quemResponde = nivel => (nivel % 2 === 0 ? 'adv' : 'voce');
+    let e;
+
+    function inicio() {
+        e = { nivel: 0, falas: [['voce', 'Truco!']], fim: false, pontos: 1, msg: '' };
+        desenha();
+    }
+
+    function acao(tipo) {
+        const canto = CANTOS[e.nivel], r = quemResponde(e.nivel), q = quemCantou(e.nivel);
+        if (tipo === 'quero') {
+            e.falas.push([r, 'Quero!']);
+            e.pontos = canto.vale; e.fim = true;
+            e.msg = `Aposta aceita. O jogo continua e quem vencer a mão leva ${canto.vale} pontos.`;
+        } else if (tipo === 'nao') {
+            e.falas.push([r, 'Não quero.']);
+            e.pontos = canto.foge; e.fim = true;
+            e.msg = `${NOME[r]} foge. ${NOME[q]} leva ${plural(canto.foge, 'ponto', 'pontos')} e a mão termina.`;
+        } else {
+            e.nivel++;
+            e.falas.push([r, CANTOS[e.nivel].nome]);
+        }
+        desenha();
+    }
+
+    function desenha() {
+        const emJogo = e.fim ? e.pontos : CANTOS[e.nivel].foge;
+        valor.textContent = emJogo;
+        unidade.textContent = (emJogo === 1 ? 'ponto' : 'pontos') + ' em jogo';
+        falas.innerHTML = e.falas.map(([quem, fala]) =>
+            `<li class="${quem}"><small>${quem === 'voce' ? 'Você' : 'Adversário'}</small><span class="canto">${fala}</span></li>`).join('');
+        retorno.textContent = e.msg;
+
+        if (e.fim) {
+            acoes.innerHTML = `<button type="button" class="btn" id="truco-reinicia" data-acao="reinicia">Recomeçar</button>`;
+            return;
+        }
+        const r = quemResponde(e.nivel), proximo = CANTOS[e.nivel + 1];
+        acoes.innerHTML =
+            `<span class="aposta__vez">${NOME[r]} responde ao “${CANTOS[e.nivel].nome}” Escolha a resposta:</span>` +
+            `<button type="button" class="btn" id="truco-quero" data-acao="quero">Quero</button>` +
+            `<button type="button" class="btn btn--fantasma" id="truco-nao" data-acao="nao">Não quero</button>` +
+            (proximo ? `<button type="button" class="btn btn--fantasma" id="truco-sobe" data-acao="sobe">${proximo.nome}</button>` : '');
+    }
+
+    acoes.addEventListener('click', ev => {
+        const bt = ev.target.closest('[data-acao]');
+        if (!bt) return;
+        bt.dataset.acao === 'reinicia' ? inicio() : acao(bt.dataset.acao);
+    });
+    inicio();
+})();
+
+/* =========================================================
+   LIÇÃO 6 · treino de envido
+   ========================================================= */
+/** Analisa 3 cartas: devolve { valor, flor, texto } com a conta explicada. */
+function analisaEnvido(mao) {
+    const porNaipe = {};
+    mao.forEach(c => (porNaipe[c.s] ??= []).push(c));
+    const grupo = Object.values(porNaipe).sort((x, y) => y.length - x.length)[0];
+    const v = grupo.map(c => valorEnvido(c.n));
+    if (grupo.length === 3) {
+        const valor = 20 + v[0] + v[1] + v[2];
+        return { valor, flor: true, texto: `Três cartas de ${grupo[0].s}: é flor. 20 + ${v.join(' + ')} = ${valor}.` };
+    }
+    if (grupo.length === 2) {
+        const valor = 20 + v[0] + v[1];
+        const figura = v.includes(0) ? ' Lembre: figura vale 0.' : '';
+        return { valor, flor: false, texto: `Duas cartas de ${grupo[0].s}: 20 + ${v[0]} + ${v[1]} = ${valor}.${figura}` };
+    }
+    const valor = Math.max(...mao.map(c => valorEnvido(c.n)));
+    return { valor, flor: false, texto: `Nenhum naipe repetido, então não há bônus: vale a maior carta, ${valor}.` };
+}
+
+(() => {
+    const pergunta = $('#envido-pergunta'), area = $('#envido-mao'), opcoes = $('#envido-opcoes');
+    const retorno = $('#envido-retorno'), proxima = $('#envido-proxima'), placar = $('#envido-placar');
+    let analise, certas = 0, total = 0;
+
+    function novaMao() {
+        const mao = embaralha(BARALHO).slice(0, 3);
+        analise = analisaEnvido(mao);
+        const vs = mao.map(c => valorEnvido(c.n)), soma = vs[0] + vs[1] + vs[2], maior = Math.max(...vs);
+        // alternativas erradas baseadas nos enganos mais comuns
+        const candidatos = [analise.valor - 20, soma + 20, maior, soma, 20 + maior, analise.valor + 1, analise.valor - 1, analise.valor + 2, analise.valor + 10];
+        const erradas = [...new Set(candidatos)].filter(x => x !== analise.valor && x >= 0 && x <= 38).slice(0, 3);
+        const lista = [analise.valor, ...erradas].sort((x, y) => x - y);
+
+        pergunta.textContent = analise.flor ? 'Esta mão tem flor. Quanto ela vale?' : 'Quanto vale o envido desta mão?';
+        area.innerHTML = mao.map(c => carta(c.n, c.s)).join('');
+        opcoes.innerHTML = lista.map((x, i) => `<button type="button" class="btn btn--fantasma" id="envido-op${i}" data-valor="${x}">${x}</button>`).join('');
+        retorno.textContent = 'Escolha um valor.';
+        retorno.removeAttribute('data-ok');
+        proxima.hidden = true;
+    }
+
+    opcoes.addEventListener('click', ev => {
+        const bt = ev.target.closest('button');
+        if (!bt || bt.disabled) return;
+        const acertou = Number(bt.dataset.valor) === analise.valor;
+        total++; if (acertou) certas++;
+        $$('button', opcoes).forEach(b => {
+            b.disabled = true;
+            if (Number(b.dataset.valor) === analise.valor) b.classList.replace('btn--fantasma', 'certa');
+        });
+        if (!acertou) bt.classList.add('errada');
+        retorno.dataset.ok = acertou ? '1' : '0';
+        retorno.textContent = (acertou ? 'Certo. ' : 'Ainda não. ') + analise.texto;
+        placar.textContent = `Acertos: ${certas} de ${total}`;
+        proxima.hidden = false;
+        proxima.focus();
+    });
+    proxima.addEventListener('click', novaMao);
+    novaMao();
+})();
+
+/* =========================================================
+   TEMA CLARO / ESCURO
+   Sem escolha salva, a página segue o tema do sistema.
+   O botão grava data-theme="dark" ou "light" na raiz, e o CSS
+   troca os tokens de cor.
+   ========================================================= */
+(() => {
+    const raiz = document.documentElement, botao = $('#tema');
+    const sistemaEscuro = window.matchMedia('(prefers-color-scheme: dark)');
+    const temaAtual = () => raiz.dataset.theme || (sistemaEscuro.matches ? 'dark' : 'light');
+
+    function mostraTema() {
+        const escuro = temaAtual() === 'dark';
+        const destino = escuro ? 'Modo claro' : 'Modo escuro';
+        $('#tema-texto').textContent = destino;
+        botao.setAttribute('aria-label', 'Mudar para o ' + destino.toLowerCase());
+        $('#tema-sol').toggleAttribute('hidden', !escuro);
+        $('#tema-lua').toggleAttribute('hidden', escuro);
+    }
+
+    botao.addEventListener('click', () => {
+        const novo = temaAtual() === 'dark' ? 'light' : 'dark';
+        raiz.dataset.theme = novo;
+        try { localStorage.setItem('truco-cego-tema', novo); } catch { /* não salva, mas troca */ }
+        mostraTema();
+    });
+    sistemaEscuro.addEventListener('change', mostraTema);
+    new MutationObserver(mostraTema).observe(raiz, { attributes: true, attributeFilter: ['data-theme'] });
+    mostraTema();
+})();
+
+/* =========================================================
+   PROGRESSO (guardado no navegador de quem estuda)
+   ========================================================= */
+const LICOES = ['baralho', 'hierarquia', 'mesa', 'empates', 'truco', 'envido', 'prova'];
+const CHAVE = 'truco-cego-progresso';
+let feitas = new Set();
+try { feitas = new Set(JSON.parse(localStorage.getItem(CHAVE) || '[]')); } catch { /* sem armazenamento: segue sem salvar */ }
+
+function mostraProgresso() {
+    const n = LICOES.filter(l => feitas.has(l)).length;
+    $('#conta').textContent = `${n}/${LICOES.length}`;
+    $('#barra').style.width = `${n / LICOES.length * 100}%`;
+    $$('.trilha__links a[data-licao]').forEach(a => a.classList.toggle('feita', feitas.has(a.dataset.licao)));
+    $$('[data-concluir]').forEach(b => {
+        const ok = feitas.has(b.dataset.concluir);
+        b.setAttribute('aria-pressed', ok);
+        b.textContent = ok ? 'Lição aprendida ✓' : 'Marcar lição como aprendida';
+    });
+}
+function marca(licao, valor) {
+    valor ? feitas.add(licao) : feitas.delete(licao);
+    try { localStorage.setItem(CHAVE, JSON.stringify([...feitas])); } catch { /* idem */ }
+    mostraProgresso();
+}
+$$('[data-concluir]').forEach(b =>
+    b.addEventListener('click', () => marca(b.dataset.concluir, !feitas.has(b.dataset.concluir))));
+
+/* destaca na barra a lição que está na tela */
+if ('IntersectionObserver' in window) {
+    const links = $$('.trilha__links a');
+    const olho = new IntersectionObserver(entradas => {
+        entradas.forEach(en => {
+            if (!en.isIntersecting) return;
+            links.forEach(a => a.classList.toggle('ativa', a.getAttribute('href') === '#' + en.target.id));
+        });
+    }, { rootMargin: '-35% 0px -60% 0px' });
+    $$('main > section').forEach(s => olho.observe(s));
+}
+
+/* =========================================================
+   LIÇÃO 7 · prova final
+   ========================================================= */
+(() => {
+    const PERGUNTAS = [
+        { p: 'Quais cartas saem do baralho espanhol antes de jogar truco?',
+          ops: ['Os coringas, os 8 e os 9', 'Só os coringas', 'Os 10, 11 e 12', 'Os coringas e os 4'], certa: 0, rever: 'baralho',
+          ex: 'Saem os dois coringas e todos os 8 e 9. Sobram 40 cartas.' },
+        { p: 'Qual é a carta mais forte do truco?',
+          ops: ['7 de ouros', '1 de paus', '1 de espadas', '3 de espadas'], certa: 2, rever: 'hierarquia',
+          ex: 'O 1 de espadas, o espadão, é a primeira manilha.' },
+        { p: 'Estas duas cartas se enfrentam numa vaza. Qual vence?', cartas: [[7, 'copas'], [12, 'paus']],
+          ops: ['O 7 de copas', 'O rei (12) de paus', 'Empate'], certa: 1, rever: 'hierarquia',
+          ex: 'O 7 de copas não é manilha: faz parte do “resto dos 7”, que fica abaixo de todas as figuras.' },
+        { p: 'E estas duas?', cartas: [[1, 'copas'], [1, 'ouros']],
+          ops: ['O 1 de copas', 'O 1 de ouros', 'Empate'], certa: 2, rever: 'hierarquia',
+          ex: 'As duas estão no mesmo degrau, o “resto dos 1”, e naipe não desempata.' },
+        { p: 'A primeira vaza empatou e você venceu a segunda. O que acontece?',
+          ops: ['Você vence a mão', 'Joga-se a terceira vaza', 'Vence quem for o mão'], certa: 0, rever: 'empates',
+          ex: 'Quando a primeira empata, quem vence a segunda leva a mão.' },
+        { p: 'Você venceu a primeira vaza, perdeu a segunda e a terceira empatou. Quem leva a mão?',
+          ops: ['Você', 'O adversário', 'Quem for o mão'], certa: 0, rever: 'empates',
+          ex: 'Empate na terceira favorece quem ganhou a primeira.' },
+        { p: 'Você canta “Truco!” e o adversário responde “Não quero”. Quantos pontos você leva?',
+          ops: ['Nenhum', '1 ponto', '2 pontos'], certa: 1, rever: 'truco',
+          ex: 'Quem foge entrega o que a mão já valia antes do canto: 1 ponto.' },
+        { p: 'O adversário respondeu “Retruco!” ao seu truco e você disse “Quero”. Quanto vale a mão?',
+          ops: ['2 pontos', '3 pontos', '4 pontos'], certa: 1, rever: 'truco',
+          ex: 'Truco aceito vale 2, retruco aceito vale 3 e vale quatro aceito vale 4.' },
+        { p: 'Quanto vale o envido desta mão?', cartas: [[12, 'ouros'], [11, 'ouros'], [4, 'paus']],
+          ops: ['4', '20', '24', '43'], certa: 1, rever: 'envido',
+          ex: 'Rei e cavalo de ouros são do mesmo naipe: 20 de bônus mais 0 + 0. O 4 de paus fica de fora.' },
+        { p: 'Você canta “Envido!”, o adversário canta outro “Envido!” em cima e você diz “Não quero”. O que acontece?',
+          ops: ['Ninguém pontua', 'O adversário leva 1 ponto', 'O adversário leva 2 pontos', 'O adversário leva 4 pontos'], certa: 2, rever: 'envido',
+          ex: 'Ao aumentar, ele aceitou os seus 2 pontos. Fugindo, você entrega o que já estava na mesa: 2.' },
+    ];
+    const NOMES = { baralho: 'Lição 1', hierarquia: 'Lição 2', empates: 'Lição 4', truco: 'Lição 5', envido: 'Lição 6' };
+    const lista = $('#quiz'), nota = $('#quiz-nota'), msg = $('#quiz-msg'), refazer = $('#quiz-refazer');
+    let certas, respondidas;
+
+    function monta() {
+        certas = 0; respondidas = 0;
+        lista.innerHTML = PERGUNTAS.map((q, i) =>
+            `<li data-i="${i}">` +
+              `<span class="prova__num">Pergunta ${i + 1} de ${PERGUNTAS.length}</span>` +
+              `<p class="prova__pergunta">${q.p}</p>` +
+              (q.cartas ? `<div class="prova__cartas">${q.cartas.map(([n, s]) => carta(n, s)).join('')}</div>` : '') +
+              `<div class="prova__ops">${q.ops.map((o, j) => `<button type="button" id="q${i}-o${j}" data-j="${j}">${o}</button>`).join('')}</div>` +
+              `<p class="prova__explica" hidden></p>` +
+            `</li>`).join('');
+        nota.textContent = `0/${PERGUNTAS.length}`;
+        msg.textContent = 'Responda às perguntas para ver sua nota.';
+        refazer.hidden = true;
+    }
+
+    lista.addEventListener('click', ev => {
+        const bt = ev.target.closest('.prova__ops button');
+        if (!bt || bt.disabled) return;
+        const li = bt.closest('li'), q = PERGUNTAS[Number(li.dataset.i)], j = Number(bt.dataset.j);
+        const acertou = j === q.certa;
+        $$('.prova__ops button', li).forEach((b, k) => {
+            b.disabled = true;
+            if (k === q.certa) b.classList.add('certa');
+        });
+        if (!acertou) bt.classList.add('errada');
+        const ex = $('.prova__explica', li);
+        ex.innerHTML = `<b>${acertou ? 'Certo.' : 'Ainda não.'}</b> ${q.ex}` +
+            (acertou ? '' : ` <a href="#${q.rever}">Rever a ${NOMES[q.rever]}</a>`);
+        ex.hidden = false;
+
+        respondidas++; if (acertou) certas++;
+        nota.textContent = `${certas}/${PERGUNTAS.length}`;
+        if (respondidas < PERGUNTAS.length) {
+            msg.textContent = `Faltam ${plural(PERGUNTAS.length - respondidas, 'pergunta', 'perguntas')}.`;
+            return;
+        }
+        msg.textContent = certas >= 8 ? 'Pronto para a mesa. Boa partida!'
+                        : certas >= 5 ? 'Quase lá. Reveja as lições das perguntas que você errou.'
+                        : 'Vale refazer a trilha com calma e tentar de novo.';
+        refazer.hidden = false;
+        marca('prova', true);
+    });
+    refazer.addEventListener('click', () => { monta(); $('#prova').scrollIntoView(); });
+    monta();
+})();
+
+mostraProgresso();
+})();
+</script>
+</body>
+</html>
